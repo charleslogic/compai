@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chat Comparator</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card-bg: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e2e4e9;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --success: #16a34a;
+    --danger: #dc2626;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14151a;
+      --card-bg: #1e2028;
+      --text: #f0f1f5;
+      --muted: #9aa0ac;
+      --border: #33353f;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #4ade80;
+      --danger: #f87171;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  header h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+  .subtitle { margin: 0 0 1.5rem; color: var(--muted); font-size: 0.95rem; }
+
+  .search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  #queryInput {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.65rem 0.9rem;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  #queryInput:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .btn {
+    padding: 0.65rem 1.1rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s ease;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-secondary {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .btn-secondary:hover { background: var(--bg); }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .controls-label {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .service-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    user-select: none;
+  }
+
+  .service-item:hover { background: var(--bg); }
+  .service-item input { width: 16px; height: 16px; cursor: pointer; }
+
+  .status-msg {
+    min-height: 1.4em;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    word-break: break-word;
+  }
+  .status-msg.success { color: var(--success); }
+  .status-msg.error { color: var(--danger); }
+
+  .results-area {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+  .results-area.hidden { display: none; }
+  .results-area h2 { font-size: 1rem; margin: 0 0 0.5rem; }
+
+  #resultsList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  #resultsList li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .result-name { min-width: 130px; font-weight: 600; }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge.auto { background: var(--success); color: #fff; }
+  .badge.best-effort { background: var(--accent); color: #fff; }
+  .badge.none { background: var(--border); color: var(--muted); }
+
+  .result-link {
+    margin-left: auto;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .result-link:hover { text-decoration: underline; }
+
+  .notes {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .notes summary { cursor: pointer; font-weight: 600; color: var(--text); }
+  .notes ul { padding-left: 1.2rem; }
+  .notes li { margin-bottom: 0.4rem; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Chat Comparator</h1>
+      <p class="subtitle">Ask the same question to multiple AI chat assistants at once, then compare their answers.</p>
+    </header>
+
+    <div class="search-row">
+      <input type="text" id="queryInput" placeholder="Type your question..." autocomplete="off">
+      <button id="searchBtn" class="btn btn-primary">Search</button>
+    </div>
+
+    <div class="controls-row">
+      <span class="controls-label">Services:</span>
+      <button id="selectAllBtn" class="btn btn-secondary">Select All</button>
+      <button id="clearAllBtn" class="btn btn-secondary">Clear All</button>
+    </div>
+
+    <div class="services-grid" id="servicesGrid"></div>
+
+    <div id="statusMsg" class="status-msg" role="status" aria-live="polite"></div>
+
+    <div id="resultsArea" class="results-area hidden">
+      <h2>Opened tabs</h2>
+      <ul id="resultsList"></ul>
+    </div>
+
+    <details class="notes">
+      <summary>How this works &amp; notes</summary>
+      <ul>
+        <li><strong>Clipboard:</strong> your question is copied to the clipboard when you click Search. If your browser blocks automatic copying (common when opening this file directly from disk), the question is shown in the status message below so you can copy it manually.</li>
+        <li><strong>Pop-up blockers:</strong> browsers may block more than one or two automatically-opened tabs per click. If a tab doesn't open, allow pop-ups for this page, or click the "Open" link for that service in the results list (a manual click is never blocked).</li>
+        <li><strong>Pre-filling the question:</strong> only Perplexity is known to reliably accept a question via its URL and run the search automatically (green badge). ChatGPT, Claude, Microsoft Copilot, and You.com may pre-fill the input box via an undocumented URL parameter, but this isn't guaranteed and can change at any time (blue badge). For all other services - and as a fallback for the rest - paste (Ctrl+V / Cmd+V) your question and press Enter (gray badge).</li>
+        <li>Your checkbox selections are remembered on this device for next time.</li>
+      </ul>
+    </details>
+  </div>
+
+  <script>
+    (function () {
+      var SERVICES = [
+        { id: 'chatgpt', name: 'ChatGPT', baseUrl: 'https://chatgpt.com/', queryParam: 'q', prefill: 'best-effort', note: 'Best-effort prefill' },
+        { id: 'claude', name: 'Claude', baseUrl: 'https://claude.ai/new', queryParam: 'q', prefill: 'best-effort', note: 'Best-effort prefill' },
+        { id: 'gemini', name: 'Gemini', baseUrl: 'https://gemini.google.com/app', queryParam: null, prefill: 'none', note: 'Paste required' },
+        { id: 'copilot', name: 'Microsoft Copilot', baseUrl: 'https://copilot.microsoft.com/', queryParam: 'q', prefill: 'best-effort', note: 'Best-effort prefill' },
+        { id: 'grok', name: 'Grok', baseUrl: 'https://grok.com/', queryParam: null, prefill: 'none', note: 'Paste required' },
+        { id: 'perplexity', name: 'Perplexity', baseUrl: 'https://www.perplexity.ai/search', queryParam: 'q', prefill: 'auto', note: 'Auto-runs search' },
+        { id: 'metaai', name: 'Meta AI', baseUrl: 'https://www.meta.ai/', queryParam: null, prefill: 'none', note: 'Paste required' },
+        { id: 'deepseek', name: 'DeepSeek', baseUrl: 'https://chat.deepseek.com/', queryParam: null, prefill: 'none', note: 'Paste required' },
+        { id: 'mistral', name: 'Mistral Le Chat', baseUrl: 'https://chat.mistral.ai/chat', queryParam: null, prefill: 'none', note: 'Paste required' },
+        { id: 'youcom', name: 'You.com', baseUrl: 'https://you.com/search', queryParam: 'q', prefill: 'best-effort', note: 'Best-effort prefill' }
+      ];
+
+      var STORAGE_KEY = 'aiChatComparator.selections';
+
+      var grid = document.getElementById('servicesGrid');
+      var queryInput = document.getElementById('queryInput');
+      var searchBtn = document.getElementById('searchBtn');
+      var selectAllBtn = document.getElementById('selectAllBtn');
+      var clearAllBtn = document.getElementById('clearAllBtn');
+      var statusMsg = document.getElementById('statusMsg');
+      var resultsArea = document.getElementById('resultsArea');
+      var resultsList = document.getElementById('resultsList');
+
+      function loadSelections() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function saveSelections() {
+        var state = {};
+        SERVICES.forEach(function (svc) {
+          state[svc.id] = document.getElementById('chk-' + svc.id).checked;
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          // ignore (e.g. storage disabled)
+        }
+      }
+
+      function buildGrid() {
+        var saved = loadSelections();
+        SERVICES.forEach(function (svc) {
+          var label = document.createElement('label');
+          label.className = 'service-item';
+
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.id = 'chk-' + svc.id;
+          cb.checked = saved ? !!saved[svc.id] : true;
+          cb.addEventListener('change', saveSelections);
+
+          var span = document.createElement('span');
+          span.textContent = svc.name;
+
+          label.appendChild(cb);
+          label.appendChild(span);
+          grid.appendChild(label);
+        });
+      }
+
+      function setAll(checked) {
+        SERVICES.forEach(function (svc) {
+          document.getElementById('chk-' + svc.id).checked = checked;
+        });
+        saveSelections();
+      }
+
+      selectAllBtn.addEventListener('click', function () { setAll(true); });
+      clearAllBtn.addEventListener('click', function () { setAll(false); });
+
+      function buildUrl(svc, query) {
+        if (!svc.queryParam) return svc.baseUrl;
+        var url = new URL(svc.baseUrl);
+        url.searchParams.set(svc.queryParam, query);
+        return url.toString();
+      }
+
+      function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function (resolve, reject) {
+          var textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          try {
+            var ok = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            ok ? resolve() : reject(new Error('execCommand copy failed'));
+          } catch (e) {
+            document.body.removeChild(textarea);
+            reject(e);
+          }
+        });
+      }
+
+      function showStatus(msg, isError) {
+        statusMsg.textContent = msg;
+        statusMsg.className = 'status-msg' + (isError ? ' error' : ' success');
+      }
+
+      function handleSearch() {
+        var query = queryInput.value.trim();
+        if (!query) {
+          showStatus('Please type a question first.', true);
+          queryInput.focus();
+          return;
+        }
+
+        var selected = SERVICES.filter(function (svc) {
+          return document.getElementById('chk-' + svc.id).checked;
+        });
+
+        copyToClipboard(query).then(function () {
+          openTabsAndShowResults(selected, query, true);
+        }, function () {
+          openTabsAndShowResults(selected, query, false);
+        });
+      }
+
+      function openTabsAndShowResults(selected, query, copied) {
+        resultsList.innerHTML = '';
+
+        selected.forEach(function (svc) {
+          var url = buildUrl(svc, query);
+          window.open(url, '_blank', 'noopener,noreferrer');
+
+          var li = document.createElement('li');
+
+          var nameSpan = document.createElement('span');
+          nameSpan.className = 'result-name';
+          nameSpan.textContent = svc.name;
+
+          var badge = document.createElement('span');
+          badge.className = 'badge ' + svc.prefill;
+          badge.textContent = svc.note;
+
+          var link = document.createElement('a');
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.className = 'result-link';
+          link.textContent = 'Open';
+
+          li.appendChild(nameSpan);
+          li.appendChild(badge);
+          li.appendChild(link);
+          resultsList.appendChild(li);
+        });
+
+        resultsArea.classList.toggle('hidden', selected.length === 0);
+
+        if (selected.length === 0) {
+          showStatus('Select at least one service.', true);
+          return;
+        }
+
+        if (copied) {
+          showStatus('Copied your question to the clipboard and opened ' + selected.length + ' tab(s). If a tab didn\'t open, allow pop-ups for this page or use an "Open" link below.', false);
+        } else {
+          showStatus('Opened ' + selected.length + ' tab(s), but couldn\'t copy to the clipboard automatically. Copy your question manually: "' + query + '"', true);
+        }
+      }
+
+      searchBtn.addEventListener('click', handleSearch);
+      queryInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleSearch();
+        }
+      });
+
+      buildGrid();
+    })();
+  </script>
+</body>
+</html>
